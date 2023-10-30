@@ -3,6 +3,7 @@ import PySide6
 from PySide6.QtWidgets import (QGraphicsScene, QGraphicsPixmapItem)
 from PySide6.QtCore import (QRectF, QLineF, Qt)
 from PySide6.QtGui import (QPixmap, QImage, QPainter, QBrush, QPen, QColor, QScreen)
+from timeline import Timeline
 
 DEFAULT_BG = 'images/Background.png'
 
@@ -13,7 +14,9 @@ class PerformanceArea(QGraphicsScene):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.background_img = QImage(DEFAULT_BG)
+        self.timeline = None
+        # self.background_img = QImage(DEFAULT_BG)
+        self.performers = []
 
         self.feet_width = 70
         self.feet_height = 50
@@ -27,6 +30,9 @@ class PerformanceArea(QGraphicsScene):
         h = (w / self.feet_width) * self.feet_height
         print(w, h)
         self.setSceneRect(0, 0, w, h)
+
+    def set_timeline(self, timeline: Timeline):
+        self.timeline = timeline
 
     def drawBackground(self, painter: PySide6.QtGui.QPainter, rect: Union[PySide6.QtCore.QRectF, PySide6.QtCore.QRect]) -> None:
         self.draw_minor_grid(painter)
@@ -144,4 +150,10 @@ class PerformanceArea(QGraphicsScene):
         painter.drawLines(borderlines)
 
     def add_performer(self, name):
-        self.addItem(performer.Performer(name=name))
+        new_performer = performer.Performer(performance_area=self, timeline=self.timeline, name=name)
+        self.performers.append(new_performer)
+        self.addItem(new_performer)
+
+    def update_performer_positions(self, count):
+        for performer in self.performers:
+            performer.update_position(count)

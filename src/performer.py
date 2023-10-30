@@ -1,11 +1,16 @@
 from PySide6.QtWidgets import (QGraphicsItemGroup, QGraphicsSimpleTextItem, QGraphicsItem)
 import PySide6
 from typing import Optional
+from channels import ChannelPosition
 
 class Performer(QGraphicsItemGroup):
 
-    def __init__(self, name="Performer"):
+    def __init__(self, performance_area, timeline, name="Performer"):
         super().__init__()
+
+        self.performance_area = performance_area
+        self.timeline = timeline
+        self.position_channel = ChannelPosition(self, timeline)
 
         start_coord_x, start_coord_y = 100, 100
 
@@ -49,3 +54,10 @@ class Performer(QGraphicsItemGroup):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+
+    def update_position(self):
+        new_x, new_y = self.position_channel.get_pos()
+        self.setPos(new_x, new_y)
+
+    def set_keyframe(self):
+        self.position_channel.set_keyframe((self.x(), self.y()))

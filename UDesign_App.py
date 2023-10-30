@@ -33,7 +33,8 @@ class UDesign(QMainWindow):
         toolbar = design_toolbar.DesignToolbar(parent=self)
         self.addToolBar(toolbar)
 
-        self.timeline = timeline.Timeline(parent=self)
+        self.timeline = timeline.Timeline(parent=self, performance_area=self.scene)
+        self.scene.set_timeline(self.timeline)
 
         # view.show()
         layout.addWidget(self.view)
@@ -44,9 +45,14 @@ class UDesign(QMainWindow):
 
         self.setCentralWidget(central_widget)
 
+    def update_performer_positions(self, count):
+        self.scene.update_performer_positions(count)
+
     def add_performer(self, name):
         self.scene.add_performer(name)
 
+    def add_keyframe(self):
+        self.timeline.add_keyframe()
 
 app = QApplication(sys.argv)
 window = UDesign()
