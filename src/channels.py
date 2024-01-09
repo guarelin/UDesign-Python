@@ -7,9 +7,6 @@ class Channel:
     keyframe1_idx: int
     keyframe2_idx: int
 
-    keyframe1: Keyframe
-    keyframe2: Keyframe
-
     def __init__(self, performer, timeline):
         self.keyframes = []
         self.performer = performer
@@ -19,6 +16,9 @@ class Channel:
         self.keyframe2_idx = -1
 
     def insert_keyframe(self, keyframe: Keyframe):
+        if self.keyframe1_idx > -1:
+            k1 = self.keyframes[self.keyframe1_idx]
+
         current_frame = self.timeline.get_current_frame()
         keyframe.set_frame(current_frame)
         keyframe.set_count(self.timeline.get_current_count())
@@ -29,7 +29,7 @@ class Channel:
             action = 'insert' if self.keyframe2_idx >= 0 else 'append'
         else:
             # We know keyframe1 is valid so we are after it
-            frame1 = self.keyframes[self.keyframe1_idx].get_frame()
+            frame1 = k1.get_frame()
             if self.keyframe2_idx < 0:
                 # There is no second keyframe
                 # If we are after the current frame, append
@@ -60,18 +60,18 @@ class Channel:
     def set_frame(self, current_frame: int):
         print(f'setting frame {current_frame}, {self.keyframe1_idx}, {self.keyframe2_idx}')
         while self.keyframe2_idx >= 0 and self.keyframes[self.keyframe2_idx].get_frame() <= current_frame:
-            print('move forward')
             # move forward in time
             self.keyframe1_idx = self.keyframe2_idx
             self.keyframe2_idx += 1
             if self.keyframe2_idx >= len(self.keyframes):
                 self.keyframe2_idx = -1
+            print(f'move forward, {self.keyframe1_idx}, {self.keyframe2_idx}')
 
         while self.keyframe1_idx >= 0 and self.keyframes[self.keyframe1_idx].get_frame() > current_frame:
-            print('move backward')
             # move backward in time
             self.keyframe2_idx = self.keyframe1_idx
             self.keyframe1_idx -= 1
+            print(f'move backward, {self.keyframe1_idx}, {self.keyframe2_idx}')
 
         # Now, four possibilities
         if self.keyframe1_idx >= 0 and self.keyframe2_idx >= 0:
@@ -92,7 +92,23 @@ class Channel:
             self.keyframes[self.keyframe2_idx].use_only()
 
     def clear_keyframe(self):
-        pass
+        # There is no keyframe1
+        if self.keyframe1_idx < 0:
+            return
+        else:
+            k1 = self.keyframes[self.keyframe1_idx]
+
+        count_kf1 = k1.get_count()
+        curr_count = self.timeline.get_current_count()
+
+        if count_kf1 != curr_count:
+            return
+
+        del self.keyframes[self.keyframe1_idx]
+        self.keyframe1_idx -= 1
+
+        if self.keyframe2_idx >= 0:
+            self.keyframe2_idx -= 1
 
     def tween(self, t):
         pass
@@ -103,8 +119,6 @@ class Channel:
 
 class ChannelPosition(Channel):
     holding: bool
-    keyframe1: KeyframePosition
-    keyframe2: KeyframePosition
 
     def __init__(self, performer, timeline):
         super().__init__(performer, timeline)
@@ -117,13 +131,16 @@ class ChannelPosition(Channel):
         self.insert_keyframe(new_keyframe)
 
     def tween(self, t):
+        k1, k2 = self.keyframes[self.keyframe1_idx], self.keyframes[self.keyframe2_idx]
+
         if self.holding:
-            self.pos = self.keyframe1.get_pos()
+            self.pos = k1.get_pos()
         else:
-            a_x, a_y = self.keyframe1.get_pos()
-            b_x, b_y = self.keyframe2.get_pos()
+            a_x, a_y = k1.get_pos()
+            b_x, b_y = k2.get_pos()
 
             self.pos = (a_x + t * (b_x - a_x), a_y + t * (b_y - a_y))
+            print(self.pos)
             self.performer.setPos(self.pos[0], self.pos[1])
 
     def get_pos(self):

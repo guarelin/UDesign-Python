@@ -100,8 +100,8 @@ class Timeline(QtWidgets.QScrollArea):
             performer.set_keyframe()
 
         self.keyframe_counts.append(self.get_current_count())
+        self.keyframe_counts = sorted(self.keyframe_counts)
         self.draw_keyframes()
-        # self.draw_new_keyframe()
 
     def draw_new_keyframe(self):
         # Init the painter
@@ -128,14 +128,7 @@ class Timeline(QtWidgets.QScrollArea):
 
     def draw_keyframes(self):
         for i, count in enumerate(self.keyframe_counts):
-            new_label = QtWidgets.QLabel(parent=self.keyframe_label_widget, text=f'{i+1}')
-            new_label.setFixedSize(TICK_DIST, 15)
-            self.keyframe_label_layout.addWidget(new_label, 0, count)
-
-        if len(self.performance_area.performers) > 0:
-            k_str = self.performance_area.performers[0].position_channel.draw_keyframes()
-            self.performance_area.performers[0].get_keyframe_counts()
-            self.keyframe_label.setText(k_str)
+            self.keyframe_label_layout.itemAtPosition(0, count).widget().setText(f'{i+1}')
 
 
 class ScrollFilter(QObject):
